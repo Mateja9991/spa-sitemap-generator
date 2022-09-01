@@ -1,11 +1,11 @@
 {
-  "name": "spa-sitemap-generator",
+  "name": "sitemap-gen",
   "version": "1.0.0",
-  "description": "Sitemap generator for SPA.",
+  "description": "Sitemap generator.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ./index.js"
+    "start": "node ./src/index.js"
   },
   "repository": {
     "type": "git",
@@ -14,9 +14,9 @@
   "keywords": [
     "sitemap",
     "sitemap-generator",
-    "spa-crawler"
+    "spa-sitemap-generator"
   ],
-  "author": "Mateja",
+  "author": "Mateja Zlatanovic",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/Mateja9991/spa-sitemap-generator/issues"
