@@ -1,10 +1,12 @@
 {
   "name": "ncoded-sitemap-gen",
-  "version": "1.0.0",
+  "version": "1.0.8",
   "description": "Sitemap Generator.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "sitemap-generator",
+    "deploy": "sitemap-generator"
   },
   "repository": {
     "type": "git",
@@ -15,6 +17,9 @@
     "sitemap-generator",
     "sitemap-spa-generator"
   ],
+  "bin": {
+    "sitemap-generator": "./src/index.js"
+  },
   "author": "Mateja Zlatanovic",
   "license": "ISC",
   "bugs": {
@@ -23,6 +28,7 @@
   "homepage": "https://github.com/Mateja9991/spa-sitemap-generator#readme",
   "dependencies": {
     "commander": "^9.4.0",
+    "lodash.flow": "^3.5.0",
     "puppeteer": "^17.0.0"
   }
 }
