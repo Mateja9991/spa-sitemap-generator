@@ -1,11 +1,10 @@
 {
-  "name": "sitemap-gen",
+  "name": "ncoded-sitemap-gen",
   "version": "1.0.0",
-  "description": "Sitemap generator.",
+  "description": "Sitemap Generator.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ./src/index.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -14,7 +13,7 @@
   "keywords": [
     "sitemap",
     "sitemap-generator",
-    "spa-sitemap-generator"
+    "sitemap-spa-generator"
   ],
   "author": "Mateja Zlatanovic",
   "license": "ISC",
