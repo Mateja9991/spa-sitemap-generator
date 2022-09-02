@@ -1,5 +1,5 @@
 #! /usr/bin/env node
-const { Command, program } = require('commander');
+const { program } = require('commander');
 const Crawler = require('./crawler');
 const SitemapGenerator = require('./sitemap-generator');
 
@@ -9,14 +9,9 @@ program.parse();
 const options = program.opts();
 const { fileName, path } = options;
 const generateSitemapXML = async (url, path, fileName) => {
-  const crawler = new Crawler(url, path, fileName);
+  const crawler = new Crawler(url);
   await crawler.startCrawling(url);
-  const mapper = new SitemapGenerator(
-    await crawler.getUrlsToMap(),
-    path,
-    fileName
-  );
-  await mapper.generateSitemapXML();
+  await SitemapGenerator.generateSitemapXML(crawler.validUrls, path, fileName);
 };
 try {
   if (!program.args.length) throw new Error('You need to pass url as argument');

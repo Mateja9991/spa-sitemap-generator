@@ -8,11 +8,10 @@ const removeProtocol = (url) => url.replace(protocolRegexp, '');
 class Crawler {
   baseUrl = '';
   visitedUrls = new Map();
-  counter = 0;
   urlsToMap = new Map();
   browser = null;
   pages = [];
-  constructor(baseUrl, filePath, fileName) {
+  constructor(baseUrl) {
     this.baseUrl = new URL(baseUrl).origin;
     this.urlsToMap.set(baseUrl, true);
   }
@@ -21,6 +20,13 @@ class Crawler {
   }
   set page(value) {
     this.pages.unshift(value);
+  }
+  get validUrls() {
+    const validUrls = [];
+    for (const [pathname, isValid] of this.urlsToMap) {
+      if (isValid) validUrls.push(new URL(pathname, this.baseUrl).href);
+    }
+    return validUrls;
   }
   async #startBrowser() {
     try {
@@ -34,13 +40,6 @@ class Crawler {
       console.log('Could not create a browser instance => : ', err);
     }
     const page = await this.browser.newPage();
-  }
-  async getUrlsToMap() {
-    const validUrls = [];
-    for (const [pathname, isValid] of this.urlsToMap) {
-      if (isValid) validUrls.push(new URL(pathname, this.baseUrl).href);
-    }
-    return validUrls;
   }
   #isRedirect(url) {
     return this.page.url() !== url;
@@ -109,7 +108,6 @@ class Crawler {
         this.page = await this.browser.newPage();
         await this.page.setDefaultNavigationTimeout(0);
       }
-      // console.log(url);
       if (!(await this.#visitAndValidateUrl(url))) return;
       this.visitedUrls.set(pathname, true);
       const links = await this.#getAllPageLinks();

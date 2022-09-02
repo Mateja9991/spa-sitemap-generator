@@ -7,21 +7,26 @@ const generateUrlTag = (url) => {
 };
 
 class SitemapGenerator {
-  urls = [];
   constructor(urls, filePath, fileName) {
     this.filePath = filePath || '.';
     this.fileName = fileName || 'sitemap.xml';
     this.urls = urls;
   }
-  async generateSitemapXML() {
+  static async generateSitemapXML(
+    urls = this.urls,
+    filePath = this.filePath || '.',
+    fileName = this.fileName || 'sitemap.xml'
+  ) {
+    const getFullPath = (filePath, fileName) =>
+      `${filePath.replace(new RegExp('/$'), '')}/${fileName}`;
     try {
-      const path = `${this.filePath.replace(new RegExp('/$'), '')}/${
-        this.fileName
-      }`;
+      const path = getFullPath(filePath, fileName);
       console.log(`Generating file ${path}...`);
       await fs.writeFile(path, sitemapStart, { flag: 'w+' });
-      for (const url of this.urls) {
-        await fs.writeFile(path, generateUrlTag(new URL(url)), { flag: 'a' });
+      for (const url of urls) {
+        await fs.writeFile(path, generateUrlTag(new URL(url).href), {
+          flag: 'a',
+        });
       }
       await fs.writeFile(path, sitemapEnd, { flag: 'a' });
       console.log('File generated sucessfully.');
