@@ -3,8 +3,9 @@ const crypto = require('crypto');
 const fs = require('fs/promises');
 
 const protocolRegexp = new RegExp('^(http|https)://');
+const wwwRegexp = new RegExp('^((http|https)://)?(www.)?');
 const removeProtocol = (url) => url.replace(protocolRegexp, '');
-
+const shrinkDomain = (url) => url.replace(wwwRegexp, '');
 class Crawler {
   baseUrl = '';
   visitedUrls = new Map();
@@ -32,7 +33,7 @@ class Crawler {
     try {
       console.log('Opening the browser......');
       this.browser = await puppeteer.launch({
-        headless: false,
+        headless: true,
         args: ['--disable-setuid-sandbox'],
         ignoreHTTPSErrors: true,
       });
@@ -48,8 +49,8 @@ class Crawler {
     return this.visitedUrls.get(new URL(url).pathname);
   }
   #isValidHostname(url) {
-    return removeProtocol(url).match(
-      new RegExp(`^${removeProtocol(this.baseUrl)}.*`)
+    return shrinkDomain(url).match(
+      new RegExp(`^${shrinkDomain(this.baseUrl)}.*`)
     );
   }
   async #closeBrowser() {
@@ -95,7 +96,7 @@ class Crawler {
     for (const [urlPath, isVisited] of this.visitedUrls) {
       if (isVisited) continue;
       const newUrl = new URL(urlPath, this.baseUrl);
-      console.log(newUrl.pathname);
+      console.log(newUrl.href);
       await this.#crawl(newUrl);
     }
   }
