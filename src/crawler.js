@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 const crypto = require('crypto');
 const fs = require('fs/promises');
+const Shelve = require('./shelve');
 
 const protocolRegexp = new RegExp('^(http|https)://');
 const wwwRegexp = new RegExp('^((http|https)://)?(www.)?');
@@ -9,6 +10,7 @@ const shrinkDomain = (url) => url.replace(wwwRegexp, '');
 class Crawler {
   baseUrl = '';
   visitedUrls = new Map();
+  modifiedUrls = new Map();
   urlsToMap = new Map();
   browser = null;
   pages = [];
@@ -92,6 +94,12 @@ class Crawler {
     }
     return true;
   }
+  async #getCurrentPageContent() {
+    return await this.page.evaluate(() => {
+      document.querySelector('.recomended-cards')?.remove();
+      return document.querySelector('*').innerHTML;
+    });
+  }
   async #processNewUrls() {
     for (const [urlPath, isVisited] of this.visitedUrls) {
       if (isVisited) continue;
@@ -110,6 +118,13 @@ class Crawler {
         await this.page.setDefaultNavigationTimeout(0);
       }
       if (!(await this.#visitAndValidateUrl(url))) return;
+      if (
+        await Shelve.isPageModified(url, await this.#getCurrentPageContent())
+      ) {
+        console.log(`${url} was modified.`);
+        this.modifiedUrls.set(url, true);
+      }
+      await Shelve.savePageContent(url, await this.#getCurrentPageContent());
       this.visitedUrls.set(pathname, true);
       const links = await this.#getAllPageLinks();
       links.forEach((link) => this.#updateMaps(link));
