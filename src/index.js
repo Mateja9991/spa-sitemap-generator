@@ -12,7 +12,7 @@ const options = program.opts();
 const { fileName, path, baseUrl } = options;
 
 const generateSitemapXML = async (url, path, fileName) => {
-  const crawler = new Crawler(url);
+  const crawler = new Crawler(url, ".recomended-cards");
   await crawler.startCrawling(url);
   const pathsWithStatus = crawler.pathsWithStatus;
   const urlsToMap = rebasePaths(

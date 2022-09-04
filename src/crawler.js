@@ -10,10 +10,12 @@ class Crawler {
   #urlMap = null;
   browser = null;
   pages = [];
-  constructor(baseUrl) {
+  #dynamicClass = "";
+  constructor(baseUrl, dynamicClass) {
     const urlObject = new URL(baseUrl);
     this.baseUrl = urlObject.origin;
     this.#urlMap = new UrlMap(urlObject.pathname);
+    this.#dynamicClass = dynamicClass;
   }
   get page() {
     return (this.pages || [])[0];
@@ -27,6 +29,7 @@ class Crawler {
   get pathsWithStatus() {
     return this.#urlMap.pathsWithStatus;
   }
+
   async startCrawling(url = this.baseUrl) {
     try {
       if (!this.browser) await this.#startBrowser();
@@ -70,10 +73,10 @@ class Crawler {
     await HashShelf.set(url, await this.#getCurrentPageContent());
   }
   async #getCurrentPageContent() {
-    return await this.page.evaluate(() => {
-      document.querySelector(".recomended-cards")?.remove();
+    return await this.page.evaluate((dynamicClass) => {
+      document.querySelector(dynamicClass)?.remove();
       return document.querySelector("*").innerHTML;
-    });
+    }, this.#dynamicClass);
   }
   async #processNewUrls() {
     for (const urlPath of this.#urlMap.pathsToVisit) {
