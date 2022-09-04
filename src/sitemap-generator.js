@@ -49,13 +49,13 @@ class SitemapGenerator {
     try {
       const data = await fs.readFile(path, "utf-8");
       const xmlObj = await xml2js.parseStringPromise(data);
-      console.log(xmlObj.urlset);
+      // console.log(xmlObj.urlset);
       xmlObj.urlset.url.forEach((urlTag) => {
         const [url] = urlTag.loc;
         const [lastMod] = urlTag.lastmod;
         this.#urlMap.set(url.trim(), lastMod.trim());
       });
-      console.log(this.#urlMap);
+      // console.log(this.#urlMap);
     } catch (err) {
       console.log(err);
     }

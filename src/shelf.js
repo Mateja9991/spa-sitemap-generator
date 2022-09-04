@@ -100,6 +100,7 @@ class HashShelf {
         console.log("~~~~~~~~~~~~~~~~~~~~~~~~");
         console.log(oldDiff);
         console.log("---------------------------------");
+        await this.writeContent(url, content);
       }
     } catch (err) {
       console.log(err);
