@@ -33,7 +33,9 @@ class SitemapGenerator {
   }
   static async #writeUrlsToXML(urls, path) {
     for (const { url, isModified } of urls) {
-      const dt = isModified ? new Date().toISOString() : this.#urlMap.get(url);
+      const dt = isModified
+        ? new Date().toISOString()
+        : this.#urlMap.get(url) || new Date().toISOString();
       await fs.writeFile(path, this.#generateUrlTag(new URL(url).href, dt), {
         flag: 'a',
       });

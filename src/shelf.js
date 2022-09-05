@@ -1,11 +1,13 @@
 const crypto = require('crypto');
-const fs = require('fs/promises');
+const fsSync = require('fs');
+const fs = fsSync.promises;
 const delimeter = ':::';
 class HashShelf {
   static #map = null;
   static #path = './.snapshots';
   static async initialize() {
     this.#map = new Map();
+    if (!fsSync.existsSync(this.#path)) return;
     const data = await fs.readFile(this.#path, 'utf-8');
     data
       .split('\n')
@@ -52,7 +54,7 @@ class HashShelf {
   static async writeContent(url, content) {
     try {
       await fs.writeFile(
-        `./pages-content/${url.replaceAll(new RegExp(/(\/|:)+/g), '')}`,
+        `./page-contents/${url.replace(new RegExp(/(\/|:)+/g), '')}`,
         content,
         {
           flag: 'w+',
@@ -65,7 +67,7 @@ class HashShelf {
   static async getContent(url) {
     try {
       const data = await fs.readFile(
-        `./pages-content/${url.replaceAll(new RegExp(/(\/|:)+/g), '')}`,
+        `./pages-content/${url.replace(new RegExp(/(\/|:)+/g), '')}`,
         'utf-8'
       );
       return data;
@@ -76,7 +78,9 @@ class HashShelf {
   static async compareContents(url, content) {
     try {
       const savedContent = await this.getContent(url);
-      if (!savedContent) return;
+      if (!savedContent) {
+        return await this.writeContent(url, content);
+      }
       const splitContent = content.match(/.{1,30}/g);
       const splitIndex = splitContent.map((el, index) => ({
         line: el,

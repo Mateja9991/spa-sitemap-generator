@@ -64,15 +64,15 @@ class Crawler {
       return el?.innerHTML;
     }, this.#nextPageClass);
   }
-  async #getPageLinks(url) {
+  async #getAvailablePageLinks(url) {
     return await this.page(url).evaluate(() =>
       Array.from(document.querySelectorAll('a'), (element) => element.href)
     );
   }
   async #getAllPageLinks(url) {
-    const directLinks = await this.#getPageLinks(url);
+    const directLinks = await this.#getAvailablePageLinks(url);
     while (await this.#clickOnNextPage(url)) {
-      const newLinks = await this.#getPageLinks(url);
+      const newLinks = await this.#getAvailablePageLinks(url);
       newLinks.forEach((link) => {
         if (directLinks.indexOf(link) === -1) directLinks.push(link);
       });
@@ -104,7 +104,8 @@ class Crawler {
       console.log('---------------------');
       this.#urlMap.markAsModified(pathname);
     }
-
+    const content = await this.#getCurrentPageContent(url);
+    await HashShelf.compareContents(url, content);
     await HashShelf.set(url, await this.#getCurrentPageContent(url));
   }
   async #getCurrentPageContent(url) {
