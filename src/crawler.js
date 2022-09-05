@@ -1,16 +1,16 @@
-const puppeteer = require("puppeteer");
-const crypto = require("crypto");
-const fs = require("fs/promises");
-const HashShelf = require("./shelf");
-const UrlMap = require("./url-map");
-const { removeProtocol, shrinkDomain } = require("./utils");
+const puppeteer = require('puppeteer');
+const crypto = require('crypto');
+const fs = require('fs/promises');
+const HashShelf = require('./shelf');
+const UrlMap = require('./url-map');
+const { removeProtocol, shrinkDomain } = require('./utils');
 
 class Crawler {
-  baseUrl = "";
+  baseUrl = '';
   #urlMap = null;
   browser = null;
   pages = [];
-  #dynamicClass = "";
+  #dynamicClass = '';
   constructor(baseUrl, dynamicClass) {
     const urlObject = new URL(baseUrl);
     this.baseUrl = urlObject.origin;
@@ -42,7 +42,7 @@ class Crawler {
   }
   async #getAllPageLinks() {
     return this.page.evaluate(() =>
-      Array.from(document.querySelectorAll("a"), (element) => element.href)
+      Array.from(document.querySelectorAll('a'), (element) => element.href)
     );
   }
   #isRedirect(url) {
@@ -67,7 +67,7 @@ class Crawler {
   async #checkForModifications({ url, pathname }) {
     if (HashShelf.isKeyModified(url, await this.#getCurrentPageContent())) {
       console.log(`${url} WAS MODIFIED.`);
-      console.log("---------------------");
+      console.log('---------------------');
       this.#urlMap.markAsModified(pathname);
     }
     await HashShelf.set(url, await this.#getCurrentPageContent());
@@ -75,7 +75,7 @@ class Crawler {
   async #getCurrentPageContent() {
     return await this.page.evaluate((dynamicClass) => {
       document.querySelector(dynamicClass)?.remove();
-      return document.querySelector("*").innerHTML;
+      return document.querySelector('*').innerHTML;
     }, this.#dynamicClass);
   }
   async #processNewUrls() {
@@ -94,7 +94,7 @@ class Crawler {
   async #crawl({ href: url, pathname } = new URL(this.baseUrl)) {
     try {
       if (!this.browser) {
-        throw new Error("Browser is not open.");
+        throw new Error('Browser is not open.');
       }
       if (!this.page) {
         this.page = await this.browser.newPage();
@@ -106,41 +106,41 @@ class Crawler {
       await this.#checkForModifications({ url, pathname });
       this.#urlMap.markAsVisited(pathname);
 
-      const pageCnt = await this.#getCurrentPageContent();
-      await HashShelf.compareContents(url, pageCnt);
-      await HashShelf.writeContent(url, pageCnt);
+      // const pageCnt = await this.#getCurrentPageContent();
+      // await HashShelf.compareContents(url, pageCnt);
+      // await HashShelf.writeContent(url, pageCnt);
 
       links.forEach((link) => this.#updateMaps(link));
       await this.#processNewUrls();
     } catch (err) {
-      console.log("Error in crawl: ", err);
+      console.log('Error in crawl: ', err);
     }
   }
 
   async #startBrowser() {
     try {
-      console.log("Opening the browser......");
+      console.log('Opening the browser......');
       this.browser = await puppeteer.launch({
         headless: true,
-        args: ["--disable-setuid-sandbox"],
+        args: ['--disable-setuid-sandbox'],
         ignoreHTTPSErrors: true,
       });
     } catch (err) {
-      console.log("Could not create a browser instance => : ", err);
+      console.log('Could not create a browser instance => : ', err);
     }
     const page = await this.browser.newPage();
   }
   async #closeBrowser() {
     try {
-      console.log("Closing the browser......");
+      console.log('Closing the browser......');
       await this.browser.close();
     } catch (err) {
-      console.log("Could not close the browser instance => : ", err);
+      console.log('Could not close the browser instance => : ', err);
     }
   }
 
   async #reload() {
-    this.page.goto(this.page.url(), { waitUntil: "load" });
+    this.page.goto(this.page.url(), { waitUntil: 'load' });
     await this.waitTillHTMLRendered();
   }
 
@@ -168,7 +168,7 @@ class Crawler {
   }
 
   async #loadPage(url) {
-    await this.page.goto(url, { waitUntil: "networkidle0" });
+    await this.page.goto(url, { waitUntil: 'networkidle0' });
     // await this.page.waitForNavigation({ waitUntil: "networkidle0" });
     await this.waitTillHTMLRendered();
   }
