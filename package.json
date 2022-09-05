@@ -1,6 +1,6 @@
 {
   "name": "ncoded-sitemap-generator",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "Sitemap Generator",
   "main": "index.js",
   "scripts": {

@@ -104,14 +104,11 @@ class Crawler {
       console.log('---------------------');
       this.#urlMap.markAsModified(pathname);
     }
-    const content = await this.#getCurrentPageContent(url);
-    await HashShelf.compareContents(url, content);
-    await HashShelf.set(url, await this.#getCurrentPageContent(url));
   }
   async #getCurrentPageContent(url) {
     return await this.page(url).evaluate((dynamicClass) => {
       document.querySelector(dynamicClass)?.remove();
-      return document.querySelector('*').innerHTML;
+      return document.querySelector('body').innerHTML;
     }, this.#dynamicClass);
   }
   async #processNewUrls() {

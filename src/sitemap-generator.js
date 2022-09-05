@@ -1,4 +1,5 @@
-const fs = require('fs/promises');
+const fsSync = require('fs');
+const fs = fsSync.promises;
 const xml2js = require('xml2js');
 
 const sitemapStart = `<?xml version="1.0" encoding="UTF-8"?>\n\t<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns\:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">`;
@@ -44,11 +45,10 @@ class SitemapGenerator {
   static #generateUrlTag(url, date) {
     return `\n\t<url>\n\t\t<loc>\n\t\t\t${url}\n\t\t</loc>\n\t\t<lastmod>\n\t\t\t${date}\n\t\t</lastmod>\n\t</url>`;
   }
-  static async #loadMapFromSitemapFile(path) {
-    this.#parseSitemapXMLData(path);
-  }
+
   static async #parseSitemapXMLData(path) {
     try {
+      if (!fsSync.existsSync(path)) return;
       const data = await fs.readFile(path, 'utf-8');
       const xmlObj = await xml2js.parseStringPromise(data);
       xmlObj.urlset.url.forEach((urlTag) => {
