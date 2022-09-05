@@ -1,42 +1,28 @@
-const puppeteer = require("puppeteer");
-const crypto = require("crypto");
-const fs = require("fs/promises");
-const HashShelf = require("./shelf");
-const UrlMap = require("./url-map");
-const { removeProtocol, shrinkDomain } = require("./utils");
+const puppeteer = require('puppeteer');
+const crypto = require('crypto');
+const fs = require('fs/promises');
+const HashShelf = require('./shelf');
+const UrlMap = require('./url-map');
+const { removeProtocol, shrinkDomain } = require('./utils');
 
 class Crawler {
-  baseUrl = "";
+  baseUrl = '';
   #urlMap = null;
-  #browser = null;
+  browser = null;
   pages = [];
-  pageMap = new Map();
-  pendingPages = [];
-  loadedPages = [];
-  #dynamicClass = "";
+  #dynamicClass = '';
   constructor(baseUrl, dynamicClass) {
     const urlObject = new URL(baseUrl);
     this.baseUrl = urlObject.origin;
     this.#urlMap = new UrlMap(urlObject.pathname);
     this.#dynamicClass = dynamicClass;
   }
-  // get page() {
-  //   return (this.pages || [])[0];
-  // }
-  page(url) {
-    return this.pageMap.get(url);
+  get page() {
+    return (this.pages || [])[0];
   }
-  setPage(url, page) {
-    if (!this.pageMap.has(url)) this.pendingPages.push(page);
-    this.pageMap.set(url, page);
+  set page(value) {
+    this.pages.unshift(value);
   }
-  removePage(url) {
-    this.pageMap.delete(url);
-    this.pendingPages.pop();
-  }
-  // set page(value) {
-  //   this.pages.unshift(value);
-  // }
   get validPaths() {
     return this.#urlMap.validPaths;
   }
@@ -46,26 +32,21 @@ class Crawler {
 
   async startCrawling(url = this.baseUrl) {
     try {
-      if (!this.#browser) await this.#startBrowser();
+      if (!this.browser) await this.#startBrowser();
       await HashShelf.initialize();
-      const { href, pathname } = new URL(url);
-      this.#urlMap.addNewUrl(href);
-      this.#urlMap.markAsVisited(pathname);
-      await this.#loadPage(new URL(url).href);
-      await this.resolveAllPages();
-      console.log(this.#urlMap.numOfUrls);
+      await this.#crawl(new URL(url));
       await this.#closeBrowser();
     } catch (err) {
       console.log(err);
     }
   }
-  async #getAllPageLinks(url) {
-    return await this.page(url).evaluate(() =>
-      Array.from(document.querySelectorAll("a"), (element) => element.href)
+  async #getAllPageLinks() {
+    return this.page.evaluate(() =>
+      Array.from(document.querySelectorAll('a'), (element) => element.href)
     );
   }
   #isRedirect(url) {
-    return shrinkDomain(this.page(url).url()) !== shrinkDomain(url);
+    return shrinkDomain(this.page.url()) !== shrinkDomain(url);
   }
   #wasURLVisited(url) {
     return this.#urlMap.wasVisited(new URL(url).pathname);
@@ -84,45 +65,25 @@ class Crawler {
     return true;
   }
   async #checkForModifications({ url, pathname }) {
-    if (HashShelf.isKeyModified(url, await this.#getCurrentPageContent(url))) {
+    if (HashShelf.isKeyModified(url, await this.#getCurrentPageContent())) {
       console.log(`${url} WAS MODIFIED.`);
-      console.log("---------------------");
-      await HashShelf.compareContents(
-        url,
-        await this.#getCurrentPageContent(url)
-      );
-      // await HashShelf.writeContent(url, await this.#getCurrentPageContent(url));
+      console.log('---------------------');
       this.#urlMap.markAsModified(pathname);
     }
-    await HashShelf.set(url, await this.#getCurrentPageContent(url));
+    await HashShelf.set(url, await this.#getCurrentPageContent());
   }
-  async #getCurrentPageContent(url) {
-    await this.page(url).evaluate((dynamicClass) => {
+  async #getCurrentPageContent() {
+    return await this.page.evaluate((dynamicClass) => {
       document.querySelector(dynamicClass)?.remove();
+      return document.querySelector('*').innerHTML;
     }, this.#dynamicClass);
-    // const minStableIterations = 50;
-    // let iter = 0;
-    // let lastContent = "";
-    // let content = await this.page(url).content();
-    // while (iter <= minStableIterations) {
-    //   if (lastContent != "" && lastContent === content) ++iter;
-    //   else iter = 0;
-    //   lastContent = content;
-    //   content = await this.page(url).content();
-    // }
-    // console.log(content);
-    const body = await this.page(url).evaluate(() => {
-      return document.querySelector("body").innerHTML;
-    });
-    console.log(body);
-    return body;
   }
   async #processNewUrls() {
     for (const urlPath of this.#urlMap.pathsToVisit) {
       // console.log(urlPath);
       const newUrl = new URL(urlPath, this.baseUrl);
-      this.#urlMap.markAsVisited(urlPath);
-      await this.#loadPage(newUrl.href);
+      console.log(newUrl.href);
+      await this.#crawl(newUrl);
     }
   }
   #updateMaps(link) {
@@ -130,128 +91,86 @@ class Crawler {
     if (this.#urlMap.isMarkedForVisit(new URL(link).pathname)) return;
     this.#urlMap.addNewUrl(link);
   }
-  async processPage({ href: url, pathname }) {
-    if (!(await this.#validateUrl({ url, pathname }))) return;
-    console.log(url);
-    const links = await this.#getAllPageLinks(url);
-    await this.#checkForModifications({ url, pathname });
-    links.forEach((link) => this.#updateMaps(link));
-    await this.#processNewUrls();
-  }
-  async resolveAllPages() {
-    return new Promise((resolve, reject) => {
-      try {
-        const intervalId = setInterval(() => {
-          if (
-            !this.pendingPages.length &&
-            this.#urlMap.isBufferEmpty &&
-            // false
-            true
-          ) {
-            clearInterval(intervalId);
-            resolve();
-          }
-        }, 500);
-      } catch (err) {
-        reject(err);
+  async #crawl({ href: url, pathname } = new URL(this.baseUrl)) {
+    try {
+      if (!this.browser) {
+        throw new Error('Browser is not open.');
       }
-    });
-  }
-  async #startBrowser() {
-    try {
-      console.log("Opening the browser......");
-      this.#browser = await puppeteer.launch({
-        headless: false,
-        args: ["--disable-setuid-sandbox"],
-        ignoreHTTPSErrors: true,
-        defaultViewport: {
-          width: 1200,
-          height: 900,
-          deviceScaleFactor: 1,
-        },
-      });
+      if (!this.page) {
+        this.page = await this.browser.newPage();
+        await this.page.setDefaultNavigationTimeout(0);
+      }
+      await this.#loadPage(url);
+      if (!(await this.#validateUrl({ url, pathname }))) return;
+      const links = await this.#getAllPageLinks();
+      await this.#checkForModifications({ url, pathname });
+      this.#urlMap.markAsVisited(pathname);
+
+      // const pageCnt = await this.#getCurrentPageContent();
+      // await HashShelf.compareContents(url, pageCnt);
+      // await HashShelf.writeContent(url, pageCnt);
+
+      links.forEach((link) => this.#updateMaps(link));
+      await this.#processNewUrls();
     } catch (err) {
-      console.log("Could not create a browser instance => : ", err);
-    }
-    const page = await this.#browser.newPage();
-  }
-  async #closeBrowser() {
-    try {
-      console.log("Closing the browser......");
-      await this.#browser.close();
-    } catch (err) {
-      console.log("Could not close the browser instance => : ", err);
+      console.log('Error in crawl: ', err);
     }
   }
 
-  async waitTillHTMLRendered(url, timeout = 30000) {
-    const checkDurationMsecs = 600;
+  async #startBrowser() {
+    try {
+      console.log('Opening the browser......');
+      this.browser = await puppeteer.launch({
+        headless: true,
+        args: ['--disable-setuid-sandbox'],
+        ignoreHTTPSErrors: true,
+      });
+    } catch (err) {
+      console.log('Could not create a browser instance => : ', err);
+    }
+    const page = await this.browser.newPage();
+  }
+  async #closeBrowser() {
+    try {
+      console.log('Closing the browser......');
+      await this.browser.close();
+    } catch (err) {
+      console.log('Could not close the browser instance => : ', err);
+    }
+  }
+
+  async #reload() {
+    this.page.goto(this.page.url(), { waitUntil: 'load' });
+    await this.waitTillHTMLRendered();
+  }
+
+  async waitTillHTMLRendered(timeout = 30000) {
+    const checkDurationMsecs = 10;
     const maxChecks = timeout / checkDurationMsecs;
-    let lastHTML = "";
+    let lastHTMLSize = 0;
     let checkCounts = 1;
     let countStableSizeIterations = 0;
-    const minStableSizeIterations = 4;
+    const minStableSizeIterations = 30;
     while (checkCounts++ <= maxChecks) {
-      let html = await this.page(url).content();
-      let currentHTML = html;
-      if (lastHTML && currentHTML == lastHTML) countStableSizeIterations++;
+      let html = await this.page.content();
+      let currentHTMLSize = html.length;
+      if (lastHTMLSize != 0 && currentHTMLSize == lastHTMLSize)
+        countStableSizeIterations++;
       else countStableSizeIterations = 0; //reset the counter
 
       if (countStableSizeIterations >= minStableSizeIterations) {
         // console.log("Page rendered fully..");
         break;
       }
-      lastHTML = currentHTML;
-      await this.page(url).waitForTimeout(checkDurationMsecs);
+      lastHTMLSize = currentHTMLSize;
+      await this.page.waitForTimeout(checkDurationMsecs);
     }
   }
 
   async #loadPage(url) {
-    const newPage = await this.#browser.newPage();
-    await newPage.setDefaultNavigationTimeout(0);
-    this.setPage(url, newPage);
-    newPage.on("load", async () => {
-      // await this.page(url).waitForNetworkIdle({ idleTime: 0 });
-      // await this.waitForNetworkIdle(this.page(url), 500, 0);
-      // console.log("pre");
-      await this.waitTillHTMLRendered(url);
-      // console.log("posle");
-      await this.processPage(new URL(url));
-      await newPage.close();
-      this.removePage(url);
-    });
-    await newPage.goto(url);
-  }
-
-  async waitForNetworkIdle(page, timeout, maxInflightRequests = 0) {
-    page.on("request", onRequestStarted);
-    page.on("requestfinished", onRequestFinished);
-    page.on("requestfailed", onRequestFinished);
-
-    let inflight = 0;
-    let fulfill;
-    let promise = new Promise((x) => (fulfill = x));
-    let timeoutId = setTimeout(onTimeoutDone, timeout);
-    return promise;
-
-    function onTimeoutDone() {
-      page.removeListener("request", onRequestStarted);
-      page.removeListener("requestfinished", onRequestFinished);
-      page.removeListener("requestfailed", onRequestFinished);
-      fulfill();
-    }
-
-    function onRequestStarted() {
-      ++inflight;
-      if (inflight > maxInflightRequests) clearTimeout(timeoutId);
-    }
-
-    function onRequestFinished() {
-      if (inflight === 0) return;
-      --inflight;
-      if (inflight === maxInflightRequests)
-        timeoutId = setTimeout(onTimeoutDone, timeout);
-    }
+    await this.page.goto(url, { waitUntil: 'networkidle0' });
+    // await this.page.waitForNavigation({ waitUntil: "networkidle0" });
+    await this.waitTillHTMLRendered();
   }
 }
 
