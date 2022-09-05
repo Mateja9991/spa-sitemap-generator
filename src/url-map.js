@@ -3,7 +3,7 @@ class UrlMap {
   #modifiedUrls = new Map();
   #urlsToMap = new Map();
   #arrToVisit = [];
-  #baseUrl = "";
+  #baseUrl = '';
   #gen = null;
   constructor(baseUrl) {
     this.#baseUrl = baseUrl;
@@ -27,7 +27,6 @@ class UrlMap {
     return !this.#arrToVisit.length;
   }
   get pathsWithStatus() {
-    console.log(this.#arrToVisit);
     return this.validPaths.map((path) => ({
       path,
       isModified: !!this.#modifiedUrls.get(path),
@@ -50,11 +49,9 @@ class UrlMap {
   }
   addNewUrl(url) {
     const { pathname } = new URL(url);
-    // console.log(this.#visitedUrls);
     this.#visitedUrls.set(pathname, false);
     this.#arrToVisit.push(pathname);
     this.#urlsToMap.set(pathname, true);
-    // console.log(this.#visitedUrls);
   }
   markAsVisited(path) {
     this.#visitedUrls.set(path, true);
