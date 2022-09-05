@@ -1,19 +1,19 @@
-const puppeteer = require("puppeteer");
-const crypto = require("crypto");
-const fs = require("fs/promises");
-const HashShelf = require("./shelf");
-const UrlMap = require("./url-map");
-const { removeProtocol, shrinkDomain } = require("./utils");
+const puppeteer = require('puppeteer');
+const crypto = require('crypto');
+const fs = require('fs/promises');
+const HashShelf = require('./shelf');
+const UrlMap = require('./url-map');
+const { removeProtocol, shrinkDomain } = require('./utils');
 
 class Crawler {
-  baseUrl = "";
+  baseUrl = '';
   #urlMap = null;
   #browser = null;
   pages = [];
   pageMap = new Map();
   pendingPages = [];
   loadedPages = [];
-  #dynamicClass = "";
+  #dynamicClass = '';
   constructor(baseUrl, dynamicClass) {
     const urlObject = new URL(baseUrl);
     this.baseUrl = urlObject.origin;
@@ -61,7 +61,7 @@ class Crawler {
   }
   async #getAllPageLinks(url) {
     return await this.page(url).evaluate(() =>
-      Array.from(document.querySelectorAll("a"), (element) => element.href)
+      Array.from(document.querySelectorAll('a'), (element) => element.href)
     );
   }
   #isRedirect(url) {
@@ -86,7 +86,7 @@ class Crawler {
   async #checkForModifications({ url, pathname }) {
     if (HashShelf.isKeyModified(url, await this.#getCurrentPageContent(url))) {
       console.log(`${url} WAS MODIFIED.`);
-      console.log("---------------------");
+      console.log('---------------------');
       await HashShelf.compareContents(
         url,
         await this.#getCurrentPageContent(url)
@@ -97,8 +97,9 @@ class Crawler {
     await HashShelf.set(url, await this.#getCurrentPageContent(url));
   }
   async #getCurrentPageContent(url) {
-    await this.page(url).evaluate((dynamicClass) => {
+    return await this.page(url).evaluate((dynamicClass) => {
       document.querySelector(dynamicClass)?.remove();
+      return document.querySelector('*');
     }, this.#dynamicClass);
     // const minStableIterations = 50;
     // let iter = 0;
@@ -111,11 +112,11 @@ class Crawler {
     //   content = await this.page(url).content();
     // }
     // console.log(content);
-    const body = await this.page(url).evaluate(() => {
-      return document.querySelector("body").innerHTML;
-    });
-    console.log(body);
-    return body;
+    // const body = await this.page(url).evaluate(() => {
+    //   return document.querySelector('body').innerHTML;
+    // });
+    // console.log(body);
+    // return body;
   }
   async #processNewUrls() {
     for (const urlPath of this.#urlMap.pathsToVisit) {
@@ -159,10 +160,10 @@ class Crawler {
   }
   async #startBrowser() {
     try {
-      console.log("Opening the browser......");
+      console.log('Opening the browser......');
       this.#browser = await puppeteer.launch({
         headless: false,
-        args: ["--disable-setuid-sandbox"],
+        args: ['--disable-setuid-sandbox'],
         ignoreHTTPSErrors: true,
         defaultViewport: {
           width: 1200,
@@ -171,23 +172,23 @@ class Crawler {
         },
       });
     } catch (err) {
-      console.log("Could not create a browser instance => : ", err);
+      console.log('Could not create a browser instance => : ', err);
     }
     const page = await this.#browser.newPage();
   }
   async #closeBrowser() {
     try {
-      console.log("Closing the browser......");
+      console.log('Closing the browser......');
       await this.#browser.close();
     } catch (err) {
-      console.log("Could not close the browser instance => : ", err);
+      console.log('Could not close the browser instance => : ', err);
     }
   }
 
   async waitTillHTMLRendered(url, timeout = 30000) {
     const checkDurationMsecs = 600;
     const maxChecks = timeout / checkDurationMsecs;
-    let lastHTML = "";
+    let lastHTML = '';
     let checkCounts = 1;
     let countStableSizeIterations = 0;
     const minStableSizeIterations = 4;
@@ -210,7 +211,7 @@ class Crawler {
     const newPage = await this.#browser.newPage();
     await newPage.setDefaultNavigationTimeout(0);
     this.setPage(url, newPage);
-    newPage.on("load", async () => {
+    newPage.on('load', async () => {
       // await this.page(url).waitForNetworkIdle({ idleTime: 0 });
       // await this.waitForNetworkIdle(this.page(url), 500, 0);
       // console.log("pre");
@@ -224,9 +225,9 @@ class Crawler {
   }
 
   async waitForNetworkIdle(page, timeout, maxInflightRequests = 0) {
-    page.on("request", onRequestStarted);
-    page.on("requestfinished", onRequestFinished);
-    page.on("requestfailed", onRequestFinished);
+    page.on('request', onRequestStarted);
+    page.on('requestfinished', onRequestFinished);
+    page.on('requestfailed', onRequestFinished);
 
     let inflight = 0;
     let fulfill;
@@ -235,9 +236,9 @@ class Crawler {
     return promise;
 
     function onTimeoutDone() {
-      page.removeListener("request", onRequestStarted);
-      page.removeListener("requestfinished", onRequestFinished);
-      page.removeListener("requestfailed", onRequestFinished);
+      page.removeListener('request', onRequestStarted);
+      page.removeListener('requestfinished', onRequestFinished);
+      page.removeListener('requestfailed', onRequestFinished);
       fulfill();
     }
 

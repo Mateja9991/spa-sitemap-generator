@@ -109,7 +109,7 @@
 			https://staging.kasta.io/easy-swap/business
 		</loc>
 		<lastmod>
-			2022-09-04T14:03:00.064Z
+			2022-09-05T08:41:37.111Z
 		</lastmod>
 	</url>
 	<url>
@@ -170,6 +170,46 @@
 	</url>
 	<url>
 		<loc>
+			https://staging.kasta.io/blog/token-swap
+		</loc>
+		<lastmod>
+			2022-09-05T08:41:37.111Z
+		</lastmod>
+	</url>
+	<url>
+		<loc>
+			https://staging.kasta.io/blog/how-to-send-bitcoin
+		</loc>
+		<lastmod>
+			2022-09-05T08:41:37.111Z
+		</lastmod>
+	</url>
+	<url>
+		<loc>
+			https://staging.kasta.io/blog/what-is-crypto-swap
+		</loc>
+		<lastmod>
+			undefined
+		</lastmod>
+	</url>
+	<url>
+		<loc>
+			https://staging.kasta.io/blog/how-to-send-crypto-with-qr-code
+		</loc>
+		<lastmod>
+			2022-09-04T14:02:20.555Z
+		</lastmod>
+	</url>
+	<url>
+		<loc>
+			https://staging.kasta.io/token
+		</loc>
+		<lastmod>
+			2022-09-04T14:02:20.555Z
+		</lastmod>
+	</url>
+	<url>
+		<loc>
 			https://staging.kasta.io/blog/how-to-receive-bitcoin
 		</loc>
 		<lastmod>
@@ -186,22 +226,6 @@
 	</url>
 	<url>
 		<loc>
-			https://staging.kasta.io/blog/how-to-receive-etherum
-		</loc>
-		<lastmod>
-			undefined
-		</lastmod>
-	</url>
-	<url>
-		<loc>
-			https://staging.kasta.io/token
-		</loc>
-		<lastmod>
-			2022-09-04T14:02:20.555Z
-		</lastmod>
-	</url>
-	<url>
-		<loc>
 			https://staging.kasta.io/blog/how-to-swap-bitcoin-for-another-token
 		</loc>
 		<lastmod>
@@ -210,10 +234,18 @@
 	</url>
 	<url>
 		<loc>
-			https://staging.kasta.io/blog/how-to-send-crypto-with-qr-code
+			https://staging.kasta.io/blog/how-to-receive-etherum
 		</loc>
 		<lastmod>
-			2022-09-04T14:02:20.555Z
+			2022-09-05T08:41:37.112Z
+		</lastmod>
+	</url>
+	<url>
+		<loc>
+			https://staging.kasta.io/blog/effortless-transition-to-crypto-based-economy
+		</loc>
+		<lastmod>
+			undefined
 		</lastmod>
 	</url>
 	<url>
@@ -222,22 +254,6 @@
 		</loc>
 		<lastmod>
 			2022-09-04T14:02:20.555Z
-		</lastmod>
-	</url>
-	<url>
-		<loc>
-			https://staging.kasta.io/blog/token-swap
-		</loc>
-		<lastmod>
-			2022-09-04T14:03:38.698Z
-		</lastmod>
-	</url>
-	<url>
-		<loc>
-			https://staging.kasta.io/blog/how-to-send-bitcoin
-		</loc>
-		<lastmod>
-			2022-09-04T14:03:00.066Z
 		</lastmod>
 	</url>
 </urlset>
