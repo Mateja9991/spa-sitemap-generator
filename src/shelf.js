@@ -4,7 +4,10 @@ const fs = fsSync.promises;
 const delimeter = ':::';
 class HashShelf {
   static #map = null;
-  static #path = './.snapshots';
+  static #path = './.sitemap.snapshots';
+  static setPath(path) {
+    this.#path = path;
+  }
   static async initialize() {
     this.#map = new Map();
     if (!fsSync.existsSync(this.#path)) return;

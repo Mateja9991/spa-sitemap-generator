@@ -1,6 +1,7 @@
+const xml2js = require('xml2js');
+const moment = require('moment');
 const fsSync = require('fs');
 const fs = fsSync.promises;
-const xml2js = require('xml2js');
 
 const sitemapStart = `<?xml version="1.0" encoding="UTF-8"?>\n\t<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns\:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">`;
 const sitemapEnd = `\n</urlset>\n`;
@@ -34,16 +35,16 @@ class SitemapGenerator {
   }
   static async #writeUrlsToXML(urls, path) {
     for (const { url, isModified } of urls) {
-      const dt = isModified
-        ? new Date().toISOString()
-        : this.#urlMap.get(url) || new Date().toISOString();
-      await fs.writeFile(path, this.#generateUrlTag(new URL(url).href, dt), {
+      const date = isModified
+        ? moment().format() // ? new Date().toISOString()
+        : this.#urlMap.get(url) || moment().format(); // new Date().toISOString();
+      await fs.writeFile(path, this.#generateUrlTag(new URL(url).href, date), {
         flag: 'a',
       });
     }
   }
   static #generateUrlTag(url, date) {
-    return `\n\t<url>\n\t\t<loc>\n\t\t\t${url}\n\t\t</loc>\n\t\t<lastmod>\n\t\t\t${date}\n\t\t</lastmod>\n\t</url>`;
+    return `\n\t<url>\n\t\t<loc>${url}</loc>\n\t\t<lastmod>${date}</lastmod>\n\t</url>`;
   }
 
   static async #parseSitemapXMLData(path) {

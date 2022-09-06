@@ -15,12 +15,14 @@ class Crawler {
   loadedPages = [];
   #dynamicClass = '';
   #nextPageClass = '';
-  constructor(baseUrl, dynamicClass, nextPageClass) {
+  #pageContentSelector = 'body';
+  constructor(baseUrl, dynamicClass, nextPageClass, pageContentSelector) {
     const urlObject = new URL(baseUrl);
     this.baseUrl = urlObject.origin;
     this.#urlMap = new UrlMap(urlObject.pathname);
     this.#dynamicClass = dynamicClass;
     this.#nextPageClass = nextPageClass;
+    this.#pageContentSelector = pageContentSelector;
   }
   page(url) {
     return this.pageMap.get(url);
@@ -29,7 +31,7 @@ class Crawler {
     if (!this.pageMap.has(url)) this.pendingPages.push(page);
     this.pageMap.set(url, page);
   }
-  removePage(url) {
+  #removePage(url) {
     this.pageMap.delete(url);
     this.pendingPages.pop();
   }
@@ -48,7 +50,7 @@ class Crawler {
       this.#urlMap.addNewUrl(href);
       this.#urlMap.markAsVisited(pathname);
       await this.#loadPage(new URL(url).href);
-      await this.resolveAllPages();
+      await this.#resolveAllPages();
       console.log(this.#urlMap.numOfUrls);
       await this.#closeBrowser();
     } catch (err) {
@@ -99,17 +101,24 @@ class Crawler {
     return true;
   }
   async #checkForModifications({ url, pathname }) {
+    // console.log(await this.#getCurrentPageContent(url));
     if (HashShelf.isKeyModified(url, await this.#getCurrentPageContent(url))) {
       console.log(`${url} WAS MODIFIED.`);
       console.log('---------------------');
       this.#urlMap.markAsModified(pathname);
     }
+    // await HashShelf.compareContents(url, content);
+    await HashShelf.set(url, await this.#getCurrentPageContent(url));
   }
   async #getCurrentPageContent(url) {
-    return await this.page(url).evaluate((dynamicClass) => {
-      document.querySelector(dynamicClass)?.remove();
-      return document.querySelector('body').innerHTML;
-    }, this.#dynamicClass);
+    return await this.page(url).evaluate(
+      (dynamicClass, selector) => {
+        document.querySelector(dynamicClass)?.remove();
+        return document.querySelector(selector).innerHTML;
+      },
+      this.#dynamicClass,
+      this.#pageContentSelector
+    );
   }
   async #processNewUrls() {
     for (const urlPath of this.#urlMap.pathsToVisit) {
@@ -131,7 +140,7 @@ class Crawler {
     links.forEach((link) => this.#updateMaps(link));
     await this.#processNewUrls();
   }
-  async resolveAllPages() {
+  async #resolveAllPages() {
     return new Promise((resolve, reject) => {
       try {
         const intervalId = setInterval(() => {
@@ -184,20 +193,19 @@ class Crawler {
       await this.page(url).waitForTimeout(checkDurationMsecs);
     }
   }
-
+  async #loadAndProcessPage(url) {
+    await this.page(url).waitForNetworkIdle({ idleTime: 0 });
+    await this.waitTillHTMLRendered(url);
+    await this.processPage(new URL(url));
+    await this.page(url).close();
+    this.#removePage(url);
+  }
   async #loadPage(url) {
     const newPage = await this.#browser.newPage();
     await newPage.setDefaultNavigationTimeout(0);
     this.setPage(url, newPage);
-
     await newPage.goto(url);
-    (async () => {
-      await newPage.waitForNetworkIdle({ idleTime: 0 });
-      await this.waitTillHTMLRendered(url);
-      await this.processPage(new URL(url));
-      await newPage.close();
-      this.removePage(url);
-    })();
+    this.#loadAndProcessPage(url);
   }
 
   async waitForNetworkIdle(page, timeout, maxInflightRequests = 0) {
